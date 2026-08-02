@@ -1,0 +1,18 @@
+{
+  "name": "ubulu-africa-task",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Ubulu Africa QA assessment — root utilities (AI test-data generator)",
+  "scripts": {
+    "generate:data": "ts-node ai/test-data-generator.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.7.2"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "openai": "^4.77.0"
+  }
+}

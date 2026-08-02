@@ -1,0 +1,6 @@
+# Dependencies for ai/ utilities (test-data-generator)
+node_modules/
+.env
+
+# Optional: uncomment to avoid committing regenerated AI output
+# ai/generated-test-data.json
