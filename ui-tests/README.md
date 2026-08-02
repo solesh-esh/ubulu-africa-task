@@ -38,4 +38,8 @@ At a senior level, this policy separates “the pipeline is broken” from “th
 
 GitHub Actions workflow: `.github/workflows/ui-tests.yml`
 
+The root [`README.md`](../README.md) displays the workflow status badge (`![UI Tests](https://github.com/solesh-esh/ubulu-africa-task/actions/workflows/ui-tests.yml/badge.svg?branch=main)`). The badge reflects the **latest run on `main`** — green when lint and all test jobs succeed, red when any required job fails (real test failure, lint error, or an unexpected pass on a `test.fail()` test). Yellow/grey indicate a run in progress or no runs yet.
+
+Chromium tests run in **2 shards** (`--shard=1/2`, `--shard=2/2`) via a matrix job. On failure, blob reports from each shard are merged into a single HTML report artifact (`playwright-report-chromium-merged`). Debug artifacts (HTML reports, traces, screenshots) upload **on failure only** to reduce storage cost and artifact noise on green builds.
+
 Expected-failure tests (`test.fail()`) do not require special workflow flags — Playwright exits with code 0 when only expected failures fail. An unexpected pass exits non-zero and fails the job.

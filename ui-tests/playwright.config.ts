@@ -22,7 +22,11 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   outputDir: 'test-results/',
-  reporter: [['html'], ['list']],
+  // Sharded Chromium jobs set PLAYWRIGHT_BLOB_REPORT=true for merge-reports.
+  // Other CI jobs (Firefox) keep the HTML reporter for direct artifact upload.
+  reporter: process.env.PLAYWRIGHT_BLOB_REPORT
+    ? [['blob'], ['list']]
+    : [['html'], ['list']],
   use: {
     baseURL: 'https://opensource-demo.orangehrmlive.com',
     headless: !!process.env.CI,
