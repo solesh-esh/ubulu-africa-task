@@ -67,6 +67,8 @@ jobs:
         run: npx playwright install chromium --with-deps
 
       - name: Run Playwright tests (Chromium)
+        # test.fail() tests: expected failure → exit 0; unexpected pass → exit 1 (bug fixed alert).
+        # No special flags needed — Playwright handles expected failures natively.
         run: npx playwright test --project=chromium --project=chromium-login
 
       - name: Upload HTML report
@@ -111,6 +113,7 @@ jobs:
         run: npx playwright install firefox --with-deps
 
       - name: Run Playwright tests (Firefox)
+        # test.fail() tests: expected failure → exit 0; unexpected pass → exit 1 (bug fixed alert).
         run: npx playwright test --project=firefox --project=firefox-login
 
       - name: Upload HTML report
@@ -149,6 +152,8 @@ jobs:
           echo "| Test (Firefox) | ${{ needs.test-firefox.result }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "Download HTML reports from the Actions artifacts tab (retained 7 days)." >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Expected failures:** \`test.fail()\` tests in \`tests/known-bugs/\` count as passed when the app bug reproduces. If one unexpectedly passes, the test job fails — investigate whether the bug was fixed and remove the annotation." >> "$GITHUB_STEP_SUMMARY"
 
           echo "Lint:              ${{ needs.lint.result }}"
           echo "Test (Chromium):   ${{ needs.test-chromium.result }}"
