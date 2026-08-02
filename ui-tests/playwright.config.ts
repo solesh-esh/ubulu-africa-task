@@ -37,17 +37,27 @@ export default defineConfig({
     navigationTimeout: 30_000,
   },
   projects: [
-    // Runs first, serially — saves authenticated storageState for other projects.
+    // Browser-specific setup — each CI job installs only one browser; setup must match it.
     {
-      name: 'setup',
+      name: 'setup-chromium',
       testMatch: /auth\.setup\.ts/,
       testDir: './fixtures',
+      use: {
+        ...devices['Desktop Chrome'],
+        channel: process.env.CI ? undefined : 'chrome',
+      },
+    },
+    {
+      name: 'setup-firefox',
+      testMatch: /auth\.setup\.ts/,
+      testDir: './fixtures',
+      use: { ...devices['Desktop Firefox'] },
     },
     // Authenticated suites — reuse saved session; skip tests/auth (those test login itself).
     {
       name: 'chromium',
       testIgnore: /auth\//,
-      dependencies: ['setup'],
+      dependencies: ['setup-chromium'],
       use: {
         ...devices['Desktop Chrome'],
         storageState: authFile,
@@ -57,7 +67,7 @@ export default defineConfig({
     {
       name: 'firefox',
       testIgnore: /auth\//,
-      dependencies: ['setup'],
+      dependencies: ['setup-firefox'],
       use: {
         ...devices['Desktop Firefox'],
         storageState: authFile,
