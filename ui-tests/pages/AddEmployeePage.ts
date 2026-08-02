@@ -17,19 +17,19 @@ export class AddEmployeePage extends BasePage {
   readonly employeeIdInput: Locator;
   readonly saveButton: Locator;
   readonly successMessage: Locator;
+  readonly formAlert: Locator;
 
   constructor(page: Page) {
     super(page);
 
     this.firstNameInput = page.getByPlaceholder('First Name');
     this.lastNameInput = page.getByPlaceholder('Last Name');
-    // First "Type for hints" on this page is not used here; Employee Id has label only.
     this.employeeIdInput = page
       .getByText('Employee Id', { exact: true })
       .locator('xpath=ancestor::div[contains(@class,"oxd-input-group")]//input[not(@type="checkbox") and not(@type="file")]');
     this.saveButton = page.getByRole('button', { name: 'Save' });
-    // Toast copy is stable; fall back to URL redirect if toast disappears quickly.
     this.successMessage = page.getByText(/Successfully Saved/i);
+    this.formAlert = page.getByRole('alert');
   }
 
   async navigate(): Promise<void> {
@@ -45,8 +45,64 @@ export class AddEmployeePage extends BasePage {
 
   async saveEmployee(): Promise<void> {
     await this.saveButton.click();
-    // Wait for SPA navigation — more reliable than toast on shared demo.
     await this.page.waitForURL(/\/pim\/viewPersonalDetails\//, { timeout: 15_000 });
+  }
+
+  /** Clicks Save without waiting for success navigation (validation / negative flows). */
+  async clickSaveWithoutFilling(): Promise<void> {
+    await this.saveButton.click();
+  }
+
+  private fieldValidationMessage(field: 'firstName' | 'lastName'): Locator {
+    const placeholder = field === 'firstName' ? 'First Name' : 'Last Name';
+    return this.page
+      .getByPlaceholder(placeholder)
+      .locator('xpath=../following-sibling::span[contains(@class,"oxd-input-field-error-message")]');
+  }
+
+  async getFirstNameError(): Promise<string> {
+    const message = this.fieldValidationMessage('firstName');
+    await message.waitFor({ state: 'visible' });
+    return (await message.innerText()).trim();
+  }
+
+  async getLastNameError(): Promise<string> {
+    const message = this.fieldValidationMessage('lastName');
+    await message.waitFor({ state: 'visible' });
+    return (await message.innerText()).trim();
+  }
+
+  async getEmployeeIdError(): Promise<string> {
+    const message = this.employeeIdInput.locator(
+      'xpath=../following-sibling::span[contains(@class,"oxd-input-field-error-message")]',
+    );
+    await message.waitFor({ state: 'visible' });
+    return (await message.innerText()).trim();
+  }
+
+  async getFormAlertMessage(): Promise<string> {
+    const visible = await this.formAlert.isVisible().catch(() => false);
+    if (!visible) {
+      return '';
+    }
+    return (await this.formAlert.innerText()).trim();
+  }
+
+  async getFirstNameValue(): Promise<string> {
+    return this.firstNameInput.inputValue();
+  }
+
+  async wasEmployeeSaved(): Promise<boolean> {
+    try {
+      await this.page.waitForURL(/\/pim\/viewPersonalDetails\//, { timeout: 10_000 });
+      return true;
+    } catch {
+      return false;
+    }
+  }
+
+  async hasFirstNameValidationError(): Promise<boolean> {
+    return this.fieldValidationMessage('firstName').isVisible();
   }
 
   async getSuccessMessage(): Promise<string> {
@@ -55,11 +111,14 @@ export class AddEmployeePage extends BasePage {
       return (await this.successMessage.innerText()).trim();
     }
 
-    // Toast may have already dismissed; URL redirect confirms save on this demo.
     if (/\/pim\/viewPersonalDetails\//.test(this.page.url())) {
       return 'Successfully Saved';
     }
 
     return '';
+  }
+
+  async remainsOnAddEmployeePage(): Promise<boolean> {
+    return /\/pim\/addEmployee/.test(this.page.url());
   }
 }
