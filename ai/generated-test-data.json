@@ -1,0 +1,63 @@
+{
+  "scenarioType": "boundary",
+  "generatedAt": "2026-08-03T00:12:00.000Z",
+  "provider": "openai",
+  "model": "gpt-4o-mini",
+  "scenarios": [
+    {
+      "id": "BOUND-T1-01",
+      "tier": 1,
+      "description": "Tier 1 per-transaction at exact maximum",
+      "transferAmount": 20000,
+      "dailySpentBefore": 0,
+      "recipientType": "wallet",
+      "expectedOutcome": "accept"
+    },
+    {
+      "id": "BOUND-T1-02",
+      "tier": 1,
+      "description": "Tier 1 just over per-transaction limit",
+      "transferAmount": 20001,
+      "dailySpentBefore": 0,
+      "recipientType": "wallet",
+      "expectedOutcome": "reject"
+    },
+    {
+      "id": "BOUND-T1-03",
+      "tier": 1,
+      "description": "Tier 1 daily exhausted — remaining limit 1000",
+      "transferAmount": 2000,
+      "dailySpentBefore": 49000,
+      "recipientType": "wallet",
+      "expectedOutcome": "reject"
+    },
+    {
+      "id": "BOUND-T2-01",
+      "tier": 2,
+      "description": "Tier 2 daily at boundary after prior spend",
+      "transferAmount": 100000,
+      "dailySpentBefore": 400000,
+      "recipientType": "third_party_bank",
+      "expectedOutcome": "accept"
+    },
+    {
+      "id": "BOUND-T3-01",
+      "tier": 3,
+      "description": "Tier 3 large single transfer below daily cap",
+      "transferAmount": 4999999,
+      "dailySpentBefore": 0,
+      "recipientType": "wallet",
+      "expectedOutcome": "accept"
+    },
+    {
+      "id": "BOUND-T1-EXEMPT",
+      "tier": 1,
+      "description": "Own linked bank exempt above tier caps",
+      "transferAmount": 100000,
+      "dailySpentBefore": 50000,
+      "recipientType": "own_linked_bank",
+      "expectedOutcome": "accept"
+    }
+  ],
+  "validationWarnings": []
+}
