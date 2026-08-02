@@ -4,6 +4,13 @@ import path from 'path';
 
 dotenv.config({ path: path.resolve(__dirname, '.env') });
 
+/**
+ * Auth pattern: fixtures/auth.setup.ts logs in once → saves .auth/user.json
+ * (cookies + localStorage). Authenticated projects load that file via storageState
+ * so tests skip the login page. See auth.setup.ts for junior-friendly comments.
+ */
+const authFile = path.join(__dirname, '.auth/user.json');
+
 export default defineConfig({
   testDir: './tests',
   fullyParallel: true,
@@ -26,16 +33,44 @@ export default defineConfig({
     navigationTimeout: 30_000,
   },
   projects: [
+    // Runs first, serially — saves authenticated storageState for other projects.
+    {
+      name: 'setup',
+      testMatch: /auth\.setup\.ts/,
+      testDir: './fixtures',
+    },
+    // Authenticated suites — reuse saved session; skip tests/auth (those test login itself).
     {
       name: 'chromium',
+      testIgnore: /auth\//,
+      dependencies: ['setup'],
       use: {
         ...devices['Desktop Chrome'],
-        // Uses installed Google Chrome when available; falls back to Playwright Chromium.
+        storageState: authFile,
         channel: process.env.CI ? undefined : 'chrome',
       },
     },
     {
       name: 'firefox',
+      testIgnore: /auth\//,
+      dependencies: ['setup'],
+      use: {
+        ...devices['Desktop Firefox'],
+        storageState: authFile,
+      },
+    },
+    // Login specs must start unauthenticated — no storageState, no setup dependency.
+    {
+      name: 'chromium-login',
+      testMatch: /auth\//,
+      use: {
+        ...devices['Desktop Chrome'],
+        channel: process.env.CI ? undefined : 'chrome',
+      },
+    },
+    {
+      name: 'firefox-login',
+      testMatch: /auth\//,
       use: { ...devices['Desktop Firefox'] },
     },
   ],

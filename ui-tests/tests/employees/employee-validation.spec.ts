@@ -1,5 +1,4 @@
 import { test, expect } from '../../fixtures/base.fixture';
-import { LoginPage } from '../../pages/LoginPage';
 import { AddEmployeePage } from '../../pages/AddEmployeePage';
 import { generateEmployeeData } from '../../helpers/test-data-generator';
 
@@ -7,20 +6,10 @@ import { generateEmployeeData } from '../../helpers/test-data-generator';
 const EXISTING_EMPLOYEE_ID = '0001';
 
 test.describe('Add Employee — validation', () => {
-  let loginPage: LoginPage;
   let addEmployeePage: AddEmployeePage;
 
   test.beforeEach(async ({ page }) => {
-    loginPage = new LoginPage(page);
     addEmployeePage = new AddEmployeePage(page);
-
-    await loginPage.navigate();
-    await loginPage.login(
-      process.env.ORANGEHRM_USERNAME ?? 'Admin',
-      process.env.ORANGEHRM_PASSWORD ?? 'admin123',
-    );
-    expect(await loginPage.isLoggedIn(true)).toBe(true);
-
     await addEmployeePage.navigate();
   });
 

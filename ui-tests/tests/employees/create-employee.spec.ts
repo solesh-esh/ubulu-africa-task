@@ -1,25 +1,34 @@
 import { test, expect } from '../../fixtures/base.fixture';
-import { LoginPage } from '../../pages/LoginPage';
 import { AddEmployeePage } from '../../pages/AddEmployeePage';
 import { EmployeeListPage } from '../../pages/EmployeeListPage';
 import { generateEmployeeData } from '../../helpers/test-data-generator';
 
+/**
+ * AUTH REFACTOR — before vs after (storageState pattern)
+ *
+ * BEFORE (every test):
+ *   beforeEach → open login page → fill credentials → wait for dashboard (~5–10s)
+ *   Repeat for each test file and each test case. Slow on the shared demo.
+ *
+ * AFTER (this file):
+ *   fixtures/auth.setup.ts logs in ONCE before the run and saves cookies +
+ *   localStorage to .auth/user.json. playwright.config.ts loads that file via
+ *   storageState, so each test starts already authenticated — we navigate
+ *   straight to PIM/employee pages.
+ *
+ * Why faster: one login per worker run instead of one per test.
+ * Why more stable: fewer round-trips through the login form that can flake
+ * when the public demo is under load.
+ *
+ * Login behaviour is still covered in tests/auth/* (those projects omit storageState).
+ */
 test.describe('Employee creation', () => {
-  let loginPage: LoginPage;
   let addEmployeePage: AddEmployeePage;
   let employeeListPage: EmployeeListPage;
 
   test.beforeEach(async ({ page }) => {
-    loginPage = new LoginPage(page);
     addEmployeePage = new AddEmployeePage(page);
     employeeListPage = new EmployeeListPage(page);
-
-    await loginPage.navigate();
-    await loginPage.login(
-      process.env.ORANGEHRM_USERNAME ?? 'Admin',
-      process.env.ORANGEHRM_PASSWORD ?? 'admin123',
-    );
-    expect(await loginPage.isLoggedIn(true)).toBe(true);
   });
 
   test('should create employee and find via search', async () => {

@@ -25,7 +25,6 @@
  * - Run as multiple roles (employee submit → manager approve) with separate auth fixtures.
  */
 import { test, expect } from '../../fixtures/base.fixture';
-import { LoginPage } from '../../pages/LoginPage';
 import { LeavePage } from '../../pages/LeavePage';
 import { getFutureDate, getPastDate, getFutureWorkingDayRange, toOrangeHrmDateRange } from '../../helpers/date.helper';
 
@@ -38,19 +37,10 @@ function uniqueLeaveOffset(): number {
 }
 
 test.describe('Leave Application', () => {
-  let loginPage: LoginPage;
   let leavePage: LeavePage;
 
   test.beforeEach(async ({ page }) => {
-    loginPage = new LoginPage(page);
     leavePage = new LeavePage(page);
-
-    await loginPage.navigate();
-    await loginPage.login(
-      process.env.ORANGEHRM_USERNAME ?? 'Admin',
-      process.env.ORANGEHRM_PASSWORD ?? 'admin123',
-    );
-    expect(await loginPage.isLoggedIn(true)).toBe(true);
   });
 
   test('should apply for annual leave successfully', async () => {

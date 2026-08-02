@@ -4,8 +4,12 @@ import { LoginPage } from '../pages/LoginPage';
 /**
  * Custom fixtures extend Playwright's base test.
  *
- * Usage in specs:
- *   import { test, expect } from '../fixtures/base.fixture';
+ * Authenticated specs (employees/, leave/) rely on storageState from
+ * fixtures/auth.setup.ts — no manual login in beforeEach.
+ * Login specs (tests/auth/) use chromium-login / firefox-login projects
+ * which intentionally omit storageState.
+ *
+ * Usage: import { test, expect } from '../fixtures/base.fixture';
  */
 export const test = base.extend<{ loginPage: LoginPage }>({
   loginPage: async ({ page }, use) => {
