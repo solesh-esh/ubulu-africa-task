@@ -1,6 +1,7 @@
 import { test, expect } from '../../fixtures/base.fixture';
 import { LoginPage } from '../../pages/LoginPage';
 import { loginScenarios } from '../../test-data/login-scenarios';
+import { orangeHrmCredentials } from '../../helpers/credentials';
 
 /**
  * Data-driven login validation
@@ -49,12 +50,9 @@ loginScenarios.forEach((scenario) => {
     const loginPage = new LoginPage(page);
     await loginPage.navigate();
 
-    const username = scenario.shouldSucceed
-      ? (process.env.ORANGEHRM_USERNAME ?? scenario.username)
-      : scenario.username;
-    const password = scenario.shouldSucceed
-      ? (process.env.ORANGEHRM_PASSWORD ?? scenario.password)
-      : scenario.password;
+    const demoCreds = orangeHrmCredentials();
+    const username = scenario.shouldSucceed ? demoCreds.username : scenario.username;
+    const password = scenario.shouldSucceed ? demoCreds.password : scenario.password;
 
     await loginPage.login(username, password);
 

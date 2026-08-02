@@ -1,5 +1,6 @@
 import { test, expect } from '../../fixtures/base.fixture';
 import { LoginPage } from '../../pages/LoginPage';
+import { orangeHrmCredentials } from '../../helpers/credentials';
 
 test.describe('OrangeHRM Login', () => {
   let loginPage: LoginPage;
@@ -10,8 +11,7 @@ test.describe('OrangeHRM Login', () => {
   });
 
   test('should login with valid credentials', async () => {
-    const username = process.env.ORANGEHRM_USERNAME ?? 'Admin';
-    const password = process.env.ORANGEHRM_PASSWORD ?? 'admin123';
+    const { username, password } = orangeHrmCredentials();
 
     await loginPage.login(username, password);
 
@@ -20,7 +20,7 @@ test.describe('OrangeHRM Login', () => {
   });
 
   test('should show error for invalid password', async () => {
-    const username = process.env.ORANGEHRM_USERNAME ?? 'Admin';
+    const { username } = orangeHrmCredentials();
 
     await loginPage.login(username, 'wrongpassword');
 

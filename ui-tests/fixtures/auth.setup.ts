@@ -21,23 +21,29 @@
 import { test as setup, expect } from '@playwright/test';
 import path from 'path';
 import fs from 'fs';
+import { orangeHrmCredentials } from '../helpers/credentials';
 
 const authDir = path.join(__dirname, '../.auth');
 const authFile = path.join(authDir, 'user.json');
 
 setup('authenticate as Admin', async ({ page }) => {
-  const username = process.env.ORANGEHRM_USERNAME ?? 'Admin';
-  const password = process.env.ORANGEHRM_PASSWORD ?? 'admin123';
+  const { username, password } = orangeHrmCredentials();
 
   fs.mkdirSync(authDir, { recursive: true });
 
   await page.goto('/web/index.php/auth/login');
+  await page.getByPlaceholder('Username').waitFor({ state: 'visible' });
+
   await page.getByPlaceholder('Username').fill(username);
   await page.getByPlaceholder('Password').fill(password);
   await page.getByRole('button', { name: 'Login' }).click();
 
-  await page.waitForURL(/\/dashboard\//, { timeout: 15_000 });
-  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
+  await page.waitForURL(/\/dashboard\//, { timeout: 30_000 }).catch(async () => {
+    const alert = page.getByRole('alert');
+    const errorText = (await alert.isVisible()) ? await alert.innerText() : 'no alert shown';
+    throw new Error(`Login failed for user "${username}": ${errorText.trim()}`);
+  });
 
+  await expect(page.getByRole('heading', { name: 'Dashboard' })).toBeVisible();
   await page.context().storageState({ path: authFile });
 });

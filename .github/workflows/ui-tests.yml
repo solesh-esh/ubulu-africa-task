@@ -65,8 +65,9 @@ jobs:
     env:
       CI: true
       PLAYWRIGHT_BLOB_REPORT: 'true'
-      ORANGEHRM_USERNAME: ${{ secrets.ORANGEHRM_USERNAME }}
-      ORANGEHRM_PASSWORD: ${{ secrets.ORANGEHRM_PASSWORD }}
+      # Public demo creds (shown on login page). Empty GitHub secrets must not override these.
+      ORANGEHRM_USERNAME: Admin
+      ORANGEHRM_PASSWORD: admin123
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -153,8 +154,8 @@ jobs:
     needs: lint
     env:
       CI: true
-      ORANGEHRM_USERNAME: ${{ secrets.ORANGEHRM_USERNAME }}
-      ORANGEHRM_PASSWORD: ${{ secrets.ORANGEHRM_PASSWORD }}
+      ORANGEHRM_USERNAME: Admin
+      ORANGEHRM_PASSWORD: admin123
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
