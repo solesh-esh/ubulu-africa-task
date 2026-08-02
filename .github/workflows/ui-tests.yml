@@ -195,10 +195,6 @@ jobs:
   report-status:
     name: Report Status
     runs-on: ubuntu-latest
-    # No checkout in this job — override workflow default (ui-tests/) so bash can start.
-    defaults:
-      run:
-        working-directory: .
     needs:
       - lint
       - test-chromium
