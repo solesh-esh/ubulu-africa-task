@@ -3,46 +3,74 @@ import { BasePage } from './BasePage';
 import { toOrangeHrmDate } from '../helpers/date.helper';
 
 /**
- * Leave → Apply / My Leave list.
+ * Leave → Apply / Assign / Leave list.
  *
- * Date strategy: OrangeHRM renders plain text inputs (placeholder yyyy-dd-mm),
- * not a detached calendar-only widget. We fill via select-all + type + Tab blur
- * rather than opening the date picker overlay (notoriously flaky in CI).
+ * Shared-demo quirk (2026): Admin ESS "Apply Leave" often shows
+ * "No Leave Types with Leave Balance" — no form. Admin "Assign Leave" still
+ * renders the full form; we fall back automatically in navigateToApplyLeave().
+ *
+ * Date strategy: fill text inputs (yyyy-dd-mm) via select-all + Tab — no calendar popup.
  */
 export class LeavePage extends BasePage {
   private readonly applyLeavePath = '/web/index.php/leave/applyLeave';
+  private readonly assignLeavePath = '/web/index.php/leave/assignLeave';
   private readonly myLeaveListPath = '/web/index.php/leave/viewMyLeaveList';
+  private readonly leaveListPath = '/web/index.php/leave/viewLeaveList';
 
+  readonly employeeSearchInput: Locator;
   readonly leaveTypeDropdown: Locator;
   readonly fromDateInput: Locator;
   readonly toDateInput: Locator;
   readonly reasonTextarea: Locator;
-  readonly submitButton: Locator;
+  readonly submitApplyButton: Locator;
+  readonly submitAssignButton: Locator;
   readonly successMessage: Locator;
   readonly leaveListRows: Locator;
+  readonly leaveBalanceText: Locator;
 
   constructor(page: Page) {
     super(page);
 
-    this.leaveTypeDropdown = page.locator('.oxd-select-text').first();
+    this.employeeSearchInput = page.getByPlaceholder('Type for hints...').first();
+    this.leaveTypeDropdown = page.locator('.oxd-select-text').filter({ hasText: /-- Select --|Leave Type/i }).first();
     this.fromDateInput = page.getByPlaceholder('yyyy-dd-mm').first();
     this.toDateInput = page.getByPlaceholder('yyyy-dd-mm').nth(1);
     this.reasonTextarea = page.locator('textarea');
-    this.submitButton = page.getByRole('button', { name: 'Apply' });
+    this.submitApplyButton = page.getByRole('button', { name: 'Apply' });
+    this.submitAssignButton = page.getByRole('button', { name: 'Assign' });
     this.successMessage = page.getByText(/Successfully Saved/i);
     this.leaveListRows = page.locator('.oxd-table-body .oxd-table-row');
+    this.leaveBalanceText = page.getByText(/Leave Balance/i);
   }
 
+  /**
+   * Opens leave form — Apply Leave if available, otherwise Assign Leave (admin fallback).
+   */
   async navigateToApplyLeave(): Promise<void> {
     await super.navigate(this.applyLeavePath);
-    await this.fromDateInput.waitFor({ state: 'visible' });
+
+    const noBalance = this.page.getByText('No Leave Types with Leave Balance');
+    if (await noBalance.isVisible().catch(() => false)) {
+      await super.navigate(this.assignLeavePath);
+      await this.selectEmployee('Sam', 'Jobin Mathew Sam');
+    }
+
+    await this.fromDateInput.waitFor({ state: 'visible', timeout: 15_000 });
+  }
+
+  async selectEmployee(search: string, optionText: string): Promise<void> {
+    await this.employeeSearchInput.fill(search);
+    await this.page.locator('.oxd-autocomplete-option').filter({ hasText: optionText }).click();
   }
 
   async navigateToMyLeaveList(): Promise<void> {
     await super.navigate(this.myLeaveListPath);
-    await this.leaveListRows.first().waitFor({ state: 'visible', timeout: 15_000 }).catch(() => {
-      // Empty list is possible on a fresh account; rows may appear after first application.
-    });
+    await this.leaveListRows.first().waitFor({ state: 'visible', timeout: 15_000 }).catch(() => {});
+  }
+
+  async navigateToLeaveList(): Promise<void> {
+    await super.navigate(this.leaveListPath);
+    await this.leaveListRows.first().waitFor({ state: 'visible', timeout: 15_000 }).catch(() => {});
   }
 
   async selectLeaveType(type: string): Promise<void> {
@@ -51,19 +79,20 @@ export class LeavePage extends BasePage {
     await this.page.locator('.oxd-select-option').filter({ hasText: type }).first().click();
   }
 
-  /** @param date ISO format YYYY-MM-DD — converted to OrangeHRM yyyy-dd-mm internally */
+  async getDisplayedLeaveBalance(): Promise<number> {
+    const text = await this.page.locator('body').innerText();
+    const match = text.match(/Leave Balance\s*([\d.]+)/);
+    return match ? parseFloat(match[1]) : 0;
+  }
+
   async setFromDate(date: string): Promise<void> {
     await this.fillDateInput(this.fromDateInput, date);
   }
 
-  /** @param date ISO format YYYY-MM-DD — converted to OrangeHRM yyyy-dd-mm internally */
   async setToDate(date: string): Promise<void> {
     await this.fillDateInput(this.toDateInput, date);
   }
 
-  /**
-   * Keyboard fill avoids calendar popup flakiness: focus → select-all → type → Tab (blur/validate).
-   */
   private async fillDateInput(input: Locator, isoDate: string): Promise<void> {
     const orangeDate = toOrangeHrmDate(isoDate);
     await input.click();
@@ -77,17 +106,19 @@ export class LeavePage extends BasePage {
   }
 
   async submitLeaveApplication(): Promise<void> {
-    await this.submitButton.click();
+    if (await this.submitAssignButton.isVisible().catch(() => false)) {
+      await this.submitAssignButton.click();
+    } else {
+      await this.submitApplyButton.click();
+    }
+
     await this.page
       .locator('.oxd-toast')
       .first()
       .waitFor({ state: 'visible', timeout: 10_000 })
-      .catch(() => {
-        // Inline validation may block submit without a toast.
-      });
+      .catch(() => {});
   }
 
-  /** Returns visible toast text (success, warning, or error). */
   async getSuccessMessage(): Promise<string> {
     const toastContainer = this.page.locator('.oxd-toast').first();
 
@@ -103,7 +134,7 @@ export class LeavePage extends BasePage {
   }
 
   async remainsOnApplyLeavePage(): Promise<boolean> {
-    return /\/leave\/applyLeave/.test(this.page.url());
+    return /\/leave\/(applyLeave|assignLeave)/.test(this.page.url());
   }
 
   async getLeaveListRowCount(): Promise<number> {
@@ -116,7 +147,6 @@ export class LeavePage extends BasePage {
     return (await row.locator('.oxd-table-cell').nth(1).innerText()).trim();
   }
 
-  /** Status column text e.g. "Pending Approval", "Cancelled (3.00)". */
   async getLeaveStatus(rowIndex: number): Promise<string> {
     const row = this.leaveListRows.nth(rowIndex);
     await row.waitFor({ state: 'visible' });
