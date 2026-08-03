@@ -1,7 +1,7 @@
 # Ubulu Africa — QA Engineer Take-Home Assessment
 
-**Author:** Solomon Eshiet  
-**Compulsory:** Part 1 (Test Strategy) · Part 6 (AI-Assisted QA)  
+**Author:** Solomon Eshiet
+**Compulsory:** Part 1 (Test Strategy) · Part 6 (AI-Assisted QA)
 **Electives:** Part 3 (UI Automation) · Part 5 (CI/CD)
 
 ---
