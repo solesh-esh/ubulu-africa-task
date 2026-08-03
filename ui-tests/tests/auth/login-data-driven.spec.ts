@@ -1,16 +1,15 @@
 import { test, expect } from '../../fixtures/base.fixture';
 import { LoginPage } from '../../pages/LoginPage';
-import { loginScenarios } from '../../test-data/login-scenarios';
+import { loadLoginScenarios } from '../../helpers/test-data-loader';
 import { orangeHrmCredentials } from '../../helpers/credentials';
 
 /**
  * Data-driven login validation
  *
- * Why data-driven instead of copy-pasting the same test five times:
+ * Test data: test-data/login-scenarios.json
  * - Single test logic, multiple inputs — a fix to navigation or assertions applies to all scenarios at once.
- * - New cases (e.g. SQLi, XSS) are one row in login-scenarios.ts, not a whole new spec file.
+ * - New cases (e.g. SQLi, XSS) are one row in JSON, not a whole new spec file.
  * - Reports show each scenario description as a distinct test title for easier triage in CI/HTML report.
- * - Test data is reviewable separately from control flow, which matches how QA thinks (cases vs steps).
  */
 
 async function assertLoginFailure(
@@ -45,14 +44,14 @@ async function assertLoginFailure(
  * prove SQL injection is impossible server-side. Passing means the app rejected the
  * attempt in the UI (invalid credentials or validation), not that the DB layer is safe.
  */
-loginScenarios.forEach((scenario) => {
+loadLoginScenarios().forEach((scenario) => {
   test(`login validation: ${scenario.description}`, async ({ page }) => {
     const loginPage = new LoginPage(page);
     await loginPage.navigate();
 
     const demoCreds = orangeHrmCredentials();
-    const username = scenario.shouldSucceed ? demoCreds.username : scenario.username;
-    const password = scenario.shouldSucceed ? demoCreds.password : scenario.password;
+    const username = scenario.useEnvCredentials ? demoCreds.username : (scenario.username ?? '');
+    const password = scenario.useEnvCredentials ? demoCreds.password : (scenario.password ?? '');
 
     await loginPage.login(username, password);
 

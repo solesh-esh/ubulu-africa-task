@@ -1,0 +1,57 @@
+{
+  "scenarios": [
+    {
+      "id": "LOGIN-001",
+      "description": "valid credentials",
+      "useEnvCredentials": true,
+      "shouldSucceed": true,
+      "tags": ["data-driven", "imperative"]
+    },
+    {
+      "id": "LOGIN-002",
+      "description": "wrong password",
+      "username": "Admin",
+      "password": "wrongpassword",
+      "shouldSucceed": false,
+      "expectedError": "Invalid credentials",
+      "tags": ["data-driven", "imperative"]
+    },
+    {
+      "id": "LOGIN-003",
+      "description": "wrong username",
+      "username": "FakeUser",
+      "password": "admin123",
+      "shouldSucceed": false,
+      "expectedError": "Invalid credentials",
+      "tags": ["data-driven"]
+    },
+    {
+      "id": "LOGIN-004",
+      "description": "empty username",
+      "username": "",
+      "password": "admin123",
+      "shouldSucceed": false,
+      "expectedError": "Required",
+      "emptyField": "username",
+      "tags": ["data-driven", "imperative"]
+    },
+    {
+      "id": "LOGIN-005",
+      "description": "empty password",
+      "username": "Admin",
+      "password": "",
+      "shouldSucceed": false,
+      "expectedError": "Required",
+      "emptyField": "password",
+      "tags": ["data-driven", "imperative"]
+    },
+    {
+      "id": "LOGIN-006",
+      "description": "SQL injection attempt",
+      "username": "' OR 1=1 --",
+      "password": "anything",
+      "shouldSucceed": false,
+      "tags": ["data-driven"]
+    }
+  ]
+}

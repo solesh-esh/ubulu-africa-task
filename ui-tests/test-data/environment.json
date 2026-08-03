@@ -1,0 +1,10 @@
+{
+  "assignLeaveFallback": {
+    "searchTerm": "Sam",
+    "employeeName": "Jobin Mathew Sam"
+  },
+  "credentialsDefaults": {
+    "username": "Admin",
+    "password": "admin123"
+  }
+}

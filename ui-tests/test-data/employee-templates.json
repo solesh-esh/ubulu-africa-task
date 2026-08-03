@@ -1,0 +1,6 @@
+{
+  "firstNamePrefix": "AutoFirst",
+  "lastNamePrefix": "AutoLast",
+  "employeeIdMin": 1000,
+  "employeeIdMax": 9999
+}

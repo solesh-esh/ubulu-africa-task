@@ -1,0 +1,37 @@
+{
+  "existingEmployeeId": "0001",
+  "validationCases": [
+    {
+      "id": "EMP-VAL-01",
+      "description": "required field error when first name is empty",
+      "firstName": "",
+      "lastName": "ValidLastName",
+      "clearFirstName": true,
+      "expectedField": "firstName",
+      "expectedError": "Required"
+    },
+    {
+      "id": "EMP-VAL-02",
+      "description": "required field error when last name is empty",
+      "firstName": "ValidFirstName",
+      "lastName": "",
+      "clearLastName": true,
+      "expectedField": "lastName",
+      "expectedError": "Required"
+    },
+    {
+      "id": "EMP-VAL-03",
+      "description": "employee ID that already exists",
+      "useGeneratedNames": true,
+      "employeeId": "0001",
+      "expectedErrorPattern": "already exists|duplicate|employee id"
+    },
+    {
+      "id": "EMP-VAL-04",
+      "description": "special characters in name fields",
+      "invalidFirstName": "Test@#$%",
+      "useUniqueLastName": true,
+      "lastNamePrefix": "ValidLast"
+    }
+  ]
+}

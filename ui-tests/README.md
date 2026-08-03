@@ -24,6 +24,21 @@ npx playwright test tests/leave/apply-leave.spec.ts --project=chromium --workers
 npx playwright test tests/known-bugs/ --project=chromium
 ```
 
+## Test data
+
+Static scenarios live in `test-data/*.json` by domain:
+
+| File | Domain |
+|------|--------|
+| `login-scenarios.json` | Login DDT + imperative cases |
+| `employee-scenarios.json` | Validation cases, duplicate ID |
+| `employee-templates.json` | Unique employee name/ID patterns |
+| `leave-scenarios.json` | Leave types, date strategies, reasons |
+| `environment.json` | Demo constants (fallback employee, default creds) |
+| `known-bugs.json` | Known product defect inputs |
+
+Specs load data via `helpers/test-data-loader.ts`. Dynamic values (unique suffixes, computed dates) remain in code.
+
 ## Known-bug / expected-failure policy
 
 Some tests in `tests/known-bugs/` document genuine defects in the OrangeHRM application under test, not mistakes in our automation. These tests are annotated with Playwright’s `test.fail()` so they continue to execute on every run while keeping the CI pipeline green. When a test marked `test.fail()` fails, Playwright treats that outcome as a pass — the failure is expected and the build remains successful. When the same test unexpectedly passes, Playwright reports a failure. That inversion is deliberate: it tells the team the application behaviour may have changed and someone should investigate whether the bug was fixed.

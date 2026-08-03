@@ -1,0 +1,23 @@
+{
+  "bugs": [
+    {
+      "id": "BUG-001",
+      "title": "employee first name should reject special characters",
+      "severity": "Medium",
+      "dateFound": "2026-08-02",
+      "description": "Special characters accepted in employee first name without validation",
+      "invalidFirstName": "Test@#$%",
+      "lastNamePrefix": "BugCheck",
+      "applyLeavePath": null
+    },
+    {
+      "id": "BUG-002",
+      "title": "Admin Apply Leave should render leave request form",
+      "severity": "High",
+      "dateFound": "2026-08-02",
+      "description": "Admin Apply Leave shows empty state instead of leave form",
+      "applyLeavePath": "/web/index.php/leave/applyLeave",
+      "noLeaveTypesMessage": "No Leave Types with Leave Balance"
+    }
+  ]
+}

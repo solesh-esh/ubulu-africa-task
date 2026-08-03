@@ -1,29 +1,23 @@
-/**
- * Employee record shape used by Add Employee form tests.
- */
-export interface EmployeeData {
-  firstName: string;
-  lastName: string;
-  employeeId: string;
-}
+import type { EmployeeData } from './test-data-loader';
+import { loadEmployeeTemplate } from './test-data-loader';
+
+export type { EmployeeData };
 
 /**
  * Generates unique employee data for each test invocation.
  *
- * Why unique data matters on a shared demo:
- * OrangeHRM OS demo is a public environment — multiple testers and CI jobs
- * mutate the same employee list concurrently. Static names (e.g. "John Doe")
- * cause search collisions, false positives (matching another user's record),
- * and flaky failures when parallel workers create duplicate IDs. Timestamp +
- * random suffixes scope each run to its own records without requiring DB cleanup.
+ * Template values live in test-data/employee-templates.json.
+ * Runtime suffixes avoid collisions on the shared OrangeHRM demo.
  */
 export function generateEmployeeData(): EmployeeData {
+  const template = loadEmployeeTemplate();
   const suffix = Date.now();
-  const employeeId = String(Math.floor(1000 + Math.random() * 9000));
+  const range = template.employeeIdMax - template.employeeIdMin;
+  const employeeId = String(template.employeeIdMin + Math.floor(Math.random() * range));
 
   return {
-    firstName: `AutoFirst${suffix}`,
-    lastName: `AutoLast${suffix}`,
+    firstName: `${template.firstNamePrefix}${suffix}`,
+    lastName: `${template.lastNamePrefix}${suffix}`,
     employeeId,
   };
 }

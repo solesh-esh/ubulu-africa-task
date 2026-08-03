@@ -1,39 +1,31 @@
 /**
- * # Leave Application — High-Risk Flow Notes
+ * Leave Application — test data in test-data/leave-scenarios.json
  *
- * ## Why this flow is high risk (business perspective)
- * Leave touches payroll, staffing coverage, and compliance. Incorrect date handling
- * can deduct wrong balances, approve overlapping absences, or pay employees for
- * time not worked. Multi-step approval and entitlement rules make regressions costly
- * and hard to spot without dedicated HR test data.
- *
- * ## Flakiness encountered — date picker handling
- * OrangeHRM exposes date fields as text inputs with a calendar icon, but clicking
- * the overlay calendar is flaky on the shared demo (animations, viewport clipping,
- * Monday-first vs Sunday-first grids, and stale month views under parallel load).
- * **Mitigation:** we bypass the widget and use Playwright `fill()` after select-all,
- * then press `Tab` to trigger blur validation. Inputs accept typed yyyy-dd-mm values
- * directly. This is faster, headless-safe, and avoids coordinate clicks on the popup.
- * We also skip weekend-only ranges via getFutureWorkingDayRange() — the demo rejects
- * them with "No Working Days Selected" (another shared-env quirk).
- *
- * ## Dedicated test environment (what we'd do differently)
- * - Seed a user with known leave entitlements (e.g. 10 days Annual Leave) instead of
- *   relying on whatever types exist on the public demo (Admin only has CAN - Bereavement).
- * - Reset leave balances and cancel test applications via API in afterEach.
- * - Freeze "today" with a clock stub so date-boundary tests are deterministic.
- * - Run as multiple roles (employee submit → manager approve) with separate auth fixtures.
+ * Date math stays in helpers/date.helper.ts (relative offsets computed at runtime).
  */
 import { test, expect } from '../../fixtures/base.fixture';
 import { LeavePage } from '../../pages/LeavePage';
-import { getFutureDate, getPastDate, getFutureWorkingDayRange, toOrangeHrmDateRange } from '../../helpers/date.helper';
+import {
+  getFutureDate,
+  getPastDate,
+  getFutureWorkingDayRange,
+  toOrangeHrmDateRange,
+} from '../../helpers/date.helper';
+import { loadLeaveCaseById, loadLeaveScenarios } from '../../helpers/test-data-loader';
 
-/** Leave type available on Assign Leave form. */
-const LEAVE_TYPE = 'US - Vacation';
+const leaveConfig = loadLeaveScenarios();
 
-/** Unique far-future offset to avoid overlapping leave on the shared demo. */
 function uniqueLeaveOffset(): number {
-  return 60 + (Date.now() % 80);
+  const { baseDays, moduloDays } = leaveConfig.uniqueOffset;
+  return baseDays + (Date.now() % moduloDays);
+}
+
+function resolveOffset(caseId: string): number {
+  const leaveCase = loadLeaveCaseById(caseId);
+  if (leaveCase.offsetDays === 'uniquePlusListExtra') {
+    return uniqueLeaveOffset() + leaveConfig.uniqueOffset.listExtraDays;
+  }
+  return uniqueLeaveOffset();
 }
 
 test.describe('Leave Application', () => {
@@ -43,17 +35,18 @@ test.describe('Leave Application', () => {
     leavePage = new LeavePage(page);
   });
 
-  test('should apply for annual leave successfully', async () => {
-    const offset = uniqueLeaveOffset();
-    const { from: fromDate, to: toDate } = getFutureWorkingDayRange(offset, 2);
-    const reason = `Annual leave request ${Date.now()}`;
+  test(`should ${loadLeaveCaseById('LEAVE-01').description}`, async () => {
+    const leaveCase = loadLeaveCaseById('LEAVE-01');
+    const offset = resolveOffset('LEAVE-01');
+    const { from: fromDate, to: toDate } = getFutureWorkingDayRange(offset, leaveCase.durationDays!);
+    const reason = `${leaveCase.reasonPrefix} ${Date.now()}`;
 
     await leavePage.navigateToApplyLeave();
 
     const balance = await leavePage.getDisplayedLeaveBalance();
     test.skip(balance <= 0, 'Shared demo: employee leave balance is 0 — success path unavailable');
 
-    await leavePage.selectLeaveType(LEAVE_TYPE);
+    await leavePage.selectLeaveType(leaveConfig.leaveType);
     await leavePage.setFromDate(fromDate);
     await leavePage.setToDate(toDate);
     await leavePage.setReason(reason);
@@ -63,20 +56,20 @@ test.describe('Leave Application', () => {
     expect(message).toMatch(/Successfully Saved/i);
   });
 
-  test('should reject leave application with past dates', async () => {
-    const fromDate = getPastDate(10);
-    const toDate = getPastDate(8);
+  test(`should ${loadLeaveCaseById('LEAVE-02').description}`, async () => {
+    const leaveCase = loadLeaveCaseById('LEAVE-02');
+    const fromDate = getPastDate(Math.abs(leaveCase.fromDateOffsetDays!));
+    const toDate = getPastDate(Math.abs(leaveCase.toDateOffsetDays!));
 
     await leavePage.navigateToApplyLeave();
-    await leavePage.selectLeaveType(LEAVE_TYPE);
+    await leavePage.selectLeaveType(leaveConfig.leaveType);
     await leavePage.setFromDate(fromDate);
     await leavePage.setToDate(toDate);
-    await leavePage.setReason('Past leave attempt');
+    await leavePage.setReason(leaveCase.reason!);
     await leavePage.submitLeaveApplication();
 
     const message = await leavePage.getSuccessMessage();
     const errors = await leavePage.getValidationErrors();
-    // Assign Leave on shared demo may not toast on past dates — assert no success and still on form.
     expect(message).not.toMatch(/Successfully Saved/i);
     expect(
       message.toLowerCase().match(/failed|error|invalid|warning/) !== null ||
@@ -85,34 +78,36 @@ test.describe('Leave Application', () => {
     ).toBe(true);
   });
 
-  test('should reject leave when from date is after to date', async () => {
-    const fromDate = getFutureDate(25);
-    const toDate = getFutureDate(20);
+  test(`should ${loadLeaveCaseById('LEAVE-03').description}`, async () => {
+    const leaveCase = loadLeaveCaseById('LEAVE-03');
+    const fromDate = getFutureDate(leaveCase.fromDateOffsetDays!);
+    const toDate = getFutureDate(leaveCase.toDateOffsetDays!);
 
     await leavePage.navigateToApplyLeave();
-    await leavePage.selectLeaveType(LEAVE_TYPE);
+    await leavePage.selectLeaveType(leaveConfig.leaveType);
     await leavePage.setFromDate(fromDate);
     await leavePage.setToDate(toDate);
-    await leavePage.setReason('Invalid date range');
+    await leavePage.setReason(leaveCase.reason!);
     await leavePage.submitLeaveApplication();
 
     const errors = await leavePage.getValidationErrors();
-    expect(errors.join(' ')).toMatch(/To date should be after from date/i);
+    expect(errors.join(' ')).toMatch(new RegExp(leaveCase.expectedErrorPattern!, 'i'));
     expect(await leavePage.remainsOnApplyLeavePage()).toBe(true);
   });
 
-  test('should show leave in My Leave list after application', async () => {
-    const offset = uniqueLeaveOffset() + 15;
-    const { from: fromDate, to: toDate } = getFutureWorkingDayRange(offset, 2);
+  test(`should ${loadLeaveCaseById('LEAVE-04').description}`, async () => {
+    const leaveCase = loadLeaveCaseById('LEAVE-04');
+    const offset = resolveOffset('LEAVE-04');
+    const { from: fromDate, to: toDate } = getFutureWorkingDayRange(offset, leaveCase.durationDays!);
     const expectedRange = toOrangeHrmDateRange(fromDate, toDate);
-    const reason = `List verification ${Date.now()}`;
+    const reason = `${leaveCase.reasonPrefix} ${Date.now()}`;
 
     await leavePage.navigateToApplyLeave();
 
     const balance = await leavePage.getDisplayedLeaveBalance();
     test.skip(balance <= 0, 'Shared demo: employee leave balance is 0 — cannot verify list entry');
 
-    await leavePage.selectLeaveType(LEAVE_TYPE);
+    await leavePage.selectLeaveType(leaveConfig.leaveType);
     await leavePage.setFromDate(fromDate);
     await leavePage.setToDate(toDate);
     await leavePage.setReason(reason);
@@ -126,7 +121,6 @@ test.describe('Leave Application', () => {
     expect(rowIndex).toBeGreaterThanOrEqual(0);
 
     const status = await leavePage.getLeaveStatus(rowIndex);
-    // Status varies on shared demo (Pending Approval, Scheduled, etc.) — assert row exists with a status.
     expect(status.length).toBeGreaterThan(0);
   });
 });

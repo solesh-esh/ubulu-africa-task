@@ -1,6 +1,6 @@
 import { Locator, Page } from '@playwright/test';
 import { BasePage } from './BasePage';
-import type { EmployeeData } from '../helpers/test-data-generator';
+import type { EmployeeData } from '../helpers/test-data-loader';
 
 /**
  * Add Employee page (PIM → Add).

@@ -1,6 +1,7 @@
 import { Locator, Page } from '@playwright/test';
 import { BasePage } from './BasePage';
 import { toOrangeHrmDate } from '../helpers/date.helper';
+import { loadEnvironmentConfig } from '../helpers/test-data-loader';
 
 /**
  * Leave → Apply / Assign / Leave list.
@@ -51,8 +52,9 @@ export class LeavePage extends BasePage {
 
     const noBalance = this.page.getByText('No Leave Types with Leave Balance');
     if (await noBalance.isVisible().catch(() => false)) {
+      const fallback = loadEnvironmentConfig().assignLeaveFallback;
       await super.navigate(this.assignLeavePath);
-      await this.selectEmployee('Sam', 'Jobin Mathew Sam');
+      await this.selectEmployee(fallback.searchTerm, fallback.employeeName);
     }
 
     await this.fromDateInput.waitFor({ state: 'visible', timeout: 15_000 });

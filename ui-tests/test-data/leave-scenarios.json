@@ -1,0 +1,49 @@
+{
+  "leaveType": "US - Vacation",
+  "uniqueOffset": {
+    "baseDays": 60,
+    "moduloDays": 80,
+    "listExtraDays": 15
+  },
+  "cases": [
+    {
+      "id": "LEAVE-01",
+      "description": "apply for annual leave successfully",
+      "dateStrategy": "futureWorkingDayRange",
+      "offsetDays": "unique",
+      "durationDays": 2,
+      "reasonPrefix": "Annual leave request",
+      "skipIfBalanceZero": true,
+      "expectSuccess": true
+    },
+    {
+      "id": "LEAVE-02",
+      "description": "reject leave application with past dates",
+      "dateStrategy": "pastRange",
+      "fromDateOffsetDays": -10,
+      "toDateOffsetDays": -8,
+      "reason": "Past leave attempt",
+      "expectSuccess": false
+    },
+    {
+      "id": "LEAVE-03",
+      "description": "reject leave when from date is after to date",
+      "dateStrategy": "invalidRange",
+      "fromDateOffsetDays": 25,
+      "toDateOffsetDays": 20,
+      "reason": "Invalid date range",
+      "expectedErrorPattern": "To date should be after from date"
+    },
+    {
+      "id": "LEAVE-04",
+      "description": "show leave in My Leave list after application",
+      "dateStrategy": "futureWorkingDayRange",
+      "offsetDays": "uniquePlusListExtra",
+      "durationDays": 2,
+      "reasonPrefix": "List verification",
+      "skipIfBalanceZero": true,
+      "expectSuccess": true,
+      "verifyList": true
+    }
+  ]
+}

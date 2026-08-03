@@ -1,7 +1,11 @@
-/** Public OrangeHRM demo defaults — used when env/secrets are unset or empty. */
+import { loadEnvironmentConfig } from './test-data-loader';
+
+/** Public OrangeHRM demo defaults — env vars override test-data/environment.json. */
 export function orangeHrmCredentials(): { username: string; password: string } {
+  const defaults = loadEnvironmentConfig().credentialsDefaults;
+
   return {
-    username: process.env.ORANGEHRM_USERNAME?.trim() || 'Admin',
-    password: process.env.ORANGEHRM_PASSWORD?.trim() || 'admin123',
+    username: process.env.ORANGEHRM_USERNAME?.trim() || defaults.username,
+    password: process.env.ORANGEHRM_PASSWORD?.trim() || defaults.password,
   };
 }
