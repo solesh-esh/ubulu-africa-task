@@ -141,6 +141,7 @@ export interface LeaveScenarioCase {
 
 interface LeaveScenariosFile {
   leaveType: string;
+  leaveTypeFallback?: string;
   uniqueOffset: { baseDays: number; moduloDays: number; listExtraDays: number };
   cases: LeaveScenarioCase[];
 }

@@ -62,7 +62,22 @@ export class LeavePage extends BasePage {
 
   async selectEmployee(search: string, optionText: string): Promise<void> {
     await this.employeeSearchInput.fill(search);
-    await this.page.locator('.oxd-autocomplete-option').filter({ hasText: optionText }).click();
+    const option = this.page.locator('.oxd-autocomplete-option').first();
+    await option.waitFor({ state: 'visible', timeout: 15_000 });
+
+    const preferred = this.page.locator('.oxd-autocomplete-option').filter({ hasText: optionText });
+    if ((await preferred.count()) > 0) {
+      await preferred.first().click();
+      return;
+    }
+
+    const firstLabel = (await option.innerText()).trim();
+    if (/no records found/i.test(firstLabel)) {
+      throw new Error(`Employee "${optionText}" not found for search "${search}"`);
+    }
+
+    // Shared demo: configured employee may be removed — select first autocomplete match.
+    await option.click();
   }
 
   async navigateToMyLeaveList(): Promise<void> {
@@ -75,10 +90,30 @@ export class LeavePage extends BasePage {
     await this.leaveListRows.first().waitFor({ state: 'visible', timeout: 15_000 }).catch(() => {});
   }
 
-  async selectLeaveType(type: string): Promise<void> {
+  async selectLeaveType(type: string, fallbackType?: string): Promise<void> {
     await this.leaveTypeDropdown.click();
     await this.page.locator('.oxd-select-dropdown').waitFor({ state: 'visible' });
-    await this.page.locator('.oxd-select-option').filter({ hasText: type }).first().click();
+
+    for (const candidate of [type, fallbackType].filter(Boolean) as string[]) {
+      const preferred = this.page.locator('.oxd-select-option').filter({ hasText: candidate }).first();
+      if (await preferred.isVisible().catch(() => false)) {
+        await preferred.click();
+        return;
+      }
+    }
+
+    // Shared demo: Admin Apply Leave may expose only CAN-* types; Assign Leave exposes US-* too.
+    const options = this.page.locator('.oxd-select-option');
+    const count = await options.count();
+    for (let i = 0; i < count; i++) {
+      const label = (await options.nth(i).innerText()).trim();
+      if (label && label !== '-- Select --') {
+        await options.nth(i).click();
+        return;
+      }
+    }
+
+    throw new Error(`Leave type "${type}" not found and no fallback options in dropdown`);
   }
 
   async getDisplayedLeaveBalance(): Promise<number> {

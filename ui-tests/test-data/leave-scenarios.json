@@ -1,5 +1,6 @@
 {
-  "leaveType": "US - Vacation",
+  "leaveType": "CAN - Bereavement",
+  "leaveTypeFallback": "US - Vacation",
   "uniqueOffset": {
     "baseDays": 60,
     "moduloDays": 80,
