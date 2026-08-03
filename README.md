@@ -8,7 +8,7 @@
 
 ## 🎥 Walkthrough Video
 
-[Watch here](YOUR_LINK_HERE)
+[Watch here](https://www.loom.com/share/01eb0fae03404428a29d82bff4779909)
 
 ---
 
