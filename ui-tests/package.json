@@ -8,7 +8,7 @@
     "test:chromium": "playwright test --project=chromium",
     "test:chrome": "playwright test --project=chromium --headed",
     "test:firefox": "playwright test --project=firefox",
-    "test:login": "playwright test tests/auth/login.spec.ts --project=chromium --headed",
+    "test:login": "playwright test tests/auth/login.spec.ts --project=chromium-login --headed",
     "report": "playwright show-report"
   },
   "devDependencies": {

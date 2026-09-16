@@ -63,6 +63,8 @@ cp .env.example .env
 
 ### Run UI tests
 
+**Important:** Run Playwright from the `ui-tests` folder. Running `npx playwright` from the repo root installs the wrong package and causes `test.describe() was not expected` errors.
+
 ```bash
 cd ui-tests
 
@@ -77,6 +79,13 @@ npm run test:chrome
 
 # Login specs only (headed)
 npm run test:login
+```
+
+From the **repo root**, use the wrapper scripts instead:
+
+```bash
+npm run test:ui          # full Chromium suite
+npm run test:ui:login    # login specs, headed
 ```
 
 ### Open HTML report

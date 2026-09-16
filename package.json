@@ -4,7 +4,9 @@
   "private": true,
   "description": "Ubulu Africa QA assessment — root utilities (AI test-data generator)",
   "scripts": {
-    "generate:data": "ts-node ai/test-data-generator.ts"
+    "generate:data": "ts-node ai/test-data-generator.ts",
+    "test:ui": "npm run test --prefix ui-tests",
+    "test:ui:login": "npm run test:login --prefix ui-tests"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",
